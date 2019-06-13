@@ -1,0 +1,35 @@
+version: '3.4'
+services:
+    foo_loadbalancer:
+        image: nginx:stable-alpine
+        ports:
+            - 4000:4000
+            - 4001:4001
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf:ro
+            - ./foo/priv/cert:/etc/nginx/ssl
+        depends_on:
+            - foo
+
+    foo:
+        container_name: "foo"
+        image: "foo_image"
+        build:
+            context: .
+            dockerfile: ./dockerfile
+            target: base-image
+            args:
+                MIX_ENV: dev
+        working_dir: /application/foo
+        environment:
+            PORT: 4000
+        volumes:
+            - .:/application
+            - /application/foo/.elixir_ls
+            - foo_build:/application/foo/_build
+            - foo_deps:/application/foo/deps
+        command: /bin/bash /application/docker_command.sh
+
+volumes:
+    foo_build:
+    foo_deps:
